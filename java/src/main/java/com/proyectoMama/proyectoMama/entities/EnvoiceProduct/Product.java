@@ -3,6 +3,9 @@ package com.proyectoMama.proyectoMama.entities.EnvoiceProduct;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name="Product")
 @ToString
@@ -15,9 +18,10 @@ public class Product {
 
     @Getter @Setter private String nombre_product;
     @Getter @Setter private String descripcion_product;
+    @Getter @Setter private double precio;
 
-    // Atributo adicional para el precio del producto
-    @Getter @Setter private double precio; // Precio del producto
-
-
+    // Relación uno a muchos con EnvoiceProduct
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Getter @Setter private Set<EnvoiceProduct> envoiceProducts = new HashSet<>();
 }
+

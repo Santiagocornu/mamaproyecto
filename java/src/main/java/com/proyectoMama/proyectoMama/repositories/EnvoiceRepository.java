@@ -8,3 +8,4 @@ import org.springframework.stereotype.Repository;
 public interface EnvoiceRepository extends JpaRepository<Envoice, Long> {
 }
 
+

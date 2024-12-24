@@ -7,42 +7,40 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/envoices")
-@CrossOrigin(origins = "http://localhost:3000")
+
 public class EnvoiceController {
+
     @Autowired
     private EnvoiceService envoiceService;
 
     @GetMapping
     public List<Envoice> getAllEnvoices() {
-        return envoiceService.findAll();
+        return envoiceService.getAllEnvoices();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Envoice> getEnvoiceById(@PathVariable Long id) {
-        Optional<Envoice> envoice = envoiceService.findById(id);
-        return envoice.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        Envoice envoice = envoiceService.getEnvoiceById(id);
+        if (envoice != null) {
+            return ResponseEntity.ok(envoice);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping
     public Envoice createEnvoice(@RequestBody Envoice envoice) {
-        return envoiceService.save(envoice);
+        return envoiceService.createEnvoice(envoice);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Envoice> updateEnvoice(@PathVariable Long id, @RequestBody Envoice envoiceDetails) {
-        Optional<Envoice> envoice = envoiceService.findById(id);
-        if (envoice.isPresent()) {
-            Envoice updatedEnvoice = envoice.get();
-            updatedEnvoice.setNombre_envoice(envoiceDetails.getNombre_envoice());
-            updatedEnvoice.setMedioPago_envoice(envoiceDetails.getMedioPago_envoice());
-            updatedEnvoice.setTotal_envoice(envoiceDetails.getTotal_envoice());
-            updatedEnvoice.setClient(envoiceDetails.getClient());
-            updatedEnvoice.setEmployer(envoiceDetails.getEmployer());
-            return ResponseEntity.ok(envoiceService.save(updatedEnvoice));
+        Envoice updatedEnvoice = envoiceService.updateEnvoice(id, envoiceDetails);
+        if (updatedEnvoice != null) {
+            return ResponseEntity.ok(updatedEnvoice);
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -50,14 +48,13 @@ public class EnvoiceController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEnvoice(@PathVariable Long id) {
-        if (envoiceService.findById(id).isPresent()) {
-            envoiceService.deleteById(id);
-            return ResponseEntity.ok().build();
+        if (envoiceService.deleteEnvoice(id)) {
+            return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.notFound().build();
         }
     }
-
-
-
 }
+
+
+

@@ -9,25 +9,19 @@ import lombok.*;
 @ToString
 @EqualsAndHashCode
 public class EnvoiceProduct {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Getter @Setter private Long id;
 
-    // Relación con Envoice
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "envoice_id")
     @Getter @Setter private Envoice envoice;
 
-    // Relación con Product
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     @Getter @Setter private Product product;
 
-    // Cantidad del producto en esta factura
-    @Getter @Setter private int cantidad;
-
-    public double getSubtotal() {
-        return product.getPrecio() * cantidad; // Calcular subtotal basado en precio y cantidad.
-    }
+    @Getter @Setter private Long quantity; // Campo para la cantidad del producto
 }
+
+

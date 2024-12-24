@@ -10,23 +10,36 @@ import java.util.Optional;
 
 @Service
 public class SaleService {
+
     @Autowired
     private SaleRepository saleRepository;
 
-    public List<Sale> findAll() {
+    public List<Sale> getAllSales() {
         return saleRepository.findAll();
     }
 
-    public Optional<Sale> findById(Long id) {
-        return saleRepository.findById(id);
+    public Sale getSaleById(Long id) {
+        return saleRepository.findById(id).orElse(null);
     }
 
-    public Sale save(Sale sale) {
+    public Sale createSale(Sale sale) {
         return saleRepository.save(sale);
     }
 
-    public void deleteById(Long id) {
-        saleRepository.deleteById(id);
+    public Sale updateSale(Long id, Sale saleDetails) {
+        return saleRepository.findById(id).map(sale -> {
+            sale.setMonto_sale(saleDetails.getMonto_sale());
+            sale.setEnvoice(saleDetails.getEnvoice());
+            return saleRepository.save(sale);
+        }).orElse(null);
+    }
+
+    public boolean deleteSale(Long id) {
+        return saleRepository.findById(id).map(sale -> {
+            saleRepository.delete(sale);
+            return true;
+        }).orElse(false);
     }
 }
+
 

@@ -7,40 +7,40 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/envoice-products")
+@RequestMapping("/api/envoiceProducts")
 @CrossOrigin(origins = "http://localhost:3000")
 public class EnvoiceProductController {
+
     @Autowired
     private EnvoiceProductService envoiceProductService;
 
     @GetMapping
     public List<EnvoiceProduct> getAllEnvoiceProducts() {
-        return envoiceProductService.findAll();
+        return envoiceProductService.getAllEnvoiceProducts();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<EnvoiceProduct> getEnvoiceProductById(@PathVariable Long id) {
-        Optional<EnvoiceProduct> envoiceProduct = envoiceProductService.findById(id);
-        return envoiceProduct.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        EnvoiceProduct envoiceProduct = envoiceProductService.getEnvoiceProductById(id);
+        if (envoiceProduct != null) {
+            return ResponseEntity.ok(envoiceProduct);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping
     public EnvoiceProduct createEnvoiceProduct(@RequestBody EnvoiceProduct envoiceProduct) {
-        return envoiceProductService.save(envoiceProduct);
+        return envoiceProductService.createEnvoiceProduct(envoiceProduct);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<EnvoiceProduct> updateEnvoiceProduct(@PathVariable Long id, @RequestBody EnvoiceProduct envoiceProductDetails) {
-        Optional<EnvoiceProduct> envoiceProduct = envoiceProductService.findById(id);
-        if (envoiceProduct.isPresent()) {
-            EnvoiceProduct updatedEnvoiceProduct = envoiceProduct.get();
-            updatedEnvoiceProduct.setEnvoice(envoiceProductDetails.getEnvoice());
-            updatedEnvoiceProduct.setProduct(envoiceProductDetails.getProduct());
-            updatedEnvoiceProduct.setCantidad(envoiceProductDetails.getCantidad());
-            return ResponseEntity.ok(envoiceProductService.save(updatedEnvoiceProduct));
+        EnvoiceProduct updatedEnvoiceProduct = envoiceProductService.updateEnvoiceProduct(id, envoiceProductDetails);
+        if (updatedEnvoiceProduct != null) {
+            return ResponseEntity.ok(updatedEnvoiceProduct);
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -48,12 +48,13 @@ public class EnvoiceProductController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEnvoiceProduct(@PathVariable Long id) {
-        if (envoiceProductService.findById(id).isPresent()) {
-            envoiceProductService.deleteById(id);
-            return ResponseEntity.ok().build();
+        if (envoiceProductService.deleteEnvoiceProduct(id)) {
+            return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.notFound().build();
         }
     }
 }
+
+
 

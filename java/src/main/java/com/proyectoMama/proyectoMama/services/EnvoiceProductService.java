@@ -10,23 +10,38 @@ import java.util.Optional;
 
 @Service
 public class EnvoiceProductService {
+
     @Autowired
     private EnvoiceProductRepository envoiceProductRepository;
 
-    public List<EnvoiceProduct> findAll() {
+    public List<EnvoiceProduct> getAllEnvoiceProducts() {
         return envoiceProductRepository.findAll();
     }
 
-    public Optional<EnvoiceProduct> findById(Long id) {
-        return envoiceProductRepository.findById(id);
+    public EnvoiceProduct getEnvoiceProductById(Long id) {
+        return envoiceProductRepository.findById(id).orElse(null);
     }
 
-    public EnvoiceProduct save(EnvoiceProduct envoiceProduct) {
+    public EnvoiceProduct createEnvoiceProduct(EnvoiceProduct envoiceProduct) {
         return envoiceProductRepository.save(envoiceProduct);
     }
 
-    public void deleteById(Long id) {
-        envoiceProductRepository.deleteById(id);
+    public EnvoiceProduct updateEnvoiceProduct(Long id, EnvoiceProduct envoiceProductDetails) {
+        return envoiceProductRepository.findById(id).map(envoiceProduct -> {
+            envoiceProduct.setEnvoice(envoiceProductDetails.getEnvoice());
+            envoiceProduct.setProduct(envoiceProductDetails.getProduct());
+            envoiceProduct.setQuantity(envoiceProductDetails.getQuantity());
+            return envoiceProductRepository.save(envoiceProduct);
+        }).orElse(null);
+    }
+
+    public boolean deleteEnvoiceProduct(Long id) {
+        return envoiceProductRepository.findById(id).map(envoiceProduct -> {
+            envoiceProductRepository.delete(envoiceProduct);
+            return true;
+        }).orElse(false);
     }
 }
+
+
 
