@@ -1,12 +1,15 @@
 package com.proyectoMama.proyectoMama.controllers;
 
 import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.EnvoiceProduct;
+import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.EnvoiceProductDTO;
 import com.proyectoMama.proyectoMama.services.EnvoiceProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/envoiceProducts")
@@ -17,30 +20,39 @@ public class EnvoiceProductController {
     private EnvoiceProductService envoiceProductService;
 
     @GetMapping
-    public List<EnvoiceProduct> getAllEnvoiceProducts() {
-        return envoiceProductService.getAllEnvoiceProducts();
+    public List<EnvoiceProductDTO> getAllEnvoiceProducts() {
+        return envoiceProductService.getAllEnvoiceProducts().stream()
+                .map(envoiceProductService::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EnvoiceProduct> getEnvoiceProductById(@PathVariable Long id) {
+    public ResponseEntity<EnvoiceProductDTO> getEnvoiceProductById(@PathVariable Long id) {
         EnvoiceProduct envoiceProduct = envoiceProductService.getEnvoiceProductById(id);
         if (envoiceProduct != null) {
-            return ResponseEntity.ok(envoiceProduct);
+            return ResponseEntity.ok(envoiceProductService.convertToDTO(envoiceProduct));
         } else {
             return ResponseEntity.notFound().build();
         }
     }
 
     @PostMapping
-    public EnvoiceProduct createEnvoiceProduct(@RequestBody EnvoiceProduct envoiceProduct) {
-        return envoiceProductService.createEnvoiceProduct(envoiceProduct);
+    public ResponseEntity<EnvoiceProductDTO> createEnvoiceProduct(@RequestBody EnvoiceProductDTO dto) {
+        try {
+            EnvoiceProduct envoiceProduct = envoiceProductService.convertToEntity(dto);
+            EnvoiceProduct createdEnvoiceProduct = envoiceProductService.createEnvoiceProduct(envoiceProduct);
+            return ResponseEntity.ok(envoiceProductService.convertToDTO(createdEnvoiceProduct));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EnvoiceProduct> updateEnvoiceProduct(@PathVariable Long id, @RequestBody EnvoiceProduct envoiceProductDetails) {
+    public ResponseEntity<EnvoiceProductDTO> updateEnvoiceProduct(@PathVariable Long id, @RequestBody EnvoiceProductDTO dto) {
+        EnvoiceProduct envoiceProductDetails = envoiceProductService.convertToEntity(dto);
         EnvoiceProduct updatedEnvoiceProduct = envoiceProductService.updateEnvoiceProduct(id, envoiceProductDetails);
         if (updatedEnvoiceProduct != null) {
-            return ResponseEntity.ok(updatedEnvoiceProduct);
+            return ResponseEntity.ok(envoiceProductService.convertToDTO(updatedEnvoiceProduct));
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -54,7 +66,26 @@ public class EnvoiceProductController {
             return ResponseEntity.notFound().build();
         }
     }
-}
 
+    @PutMapping("/{id}/associateEnvoice")
+    public ResponseEntity<EnvoiceProductDTO> associateEnvoice(@PathVariable Long id, @RequestParam Long envoiceId) {
+        EnvoiceProduct updatedEnvoiceProduct = envoiceProductService.associateEnvoice(id, envoiceId);
+        if (updatedEnvoiceProduct != null) {
+            return ResponseEntity.ok(envoiceProductService.convertToDTO(updatedEnvoiceProduct));
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/{id}/associateProduct")
+    public ResponseEntity<EnvoiceProductDTO> associateProduct(@PathVariable Long id, @RequestParam Long productId) {
+        EnvoiceProduct updatedEnvoiceProduct = envoiceProductService.associateProduct(id, productId);
+        if (updatedEnvoiceProduct != null) {
+            return ResponseEntity.ok(envoiceProductService.convertToDTO(updatedEnvoiceProduct));
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+}
 
 

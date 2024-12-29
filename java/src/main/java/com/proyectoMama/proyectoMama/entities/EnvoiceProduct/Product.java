@@ -1,5 +1,6 @@
 package com.proyectoMama.proyectoMama.entities.EnvoiceProduct;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,6 +23,8 @@ public class Product {
 
     // Relación uno a muchos con EnvoiceProduct
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore  // Ignorar esta relación para evitar ciclos y problemas de concurrencia
     @Getter @Setter private Set<EnvoiceProduct> envoiceProducts = new HashSet<>();
 }
+
 

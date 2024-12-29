@@ -1,5 +1,6 @@
 package com.proyectoMama.proyectoMama.entities.EnvoiceProduct;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.proyectoMama.proyectoMama.entities.Person.Client;
 import com.proyectoMama.proyectoMama.entities.Person.Employer;
 import jakarta.persistence.*;
@@ -10,12 +11,7 @@ import java.util.Set;
 
 
 @Entity
-@Table(name = "Envoices")
-@NoArgsConstructor
-@ToString
-@EqualsAndHashCode
 public class Envoice {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Getter @Setter private Long id_envoice;
@@ -25,9 +21,11 @@ public class Envoice {
     @Getter @Setter private Double total_envoice;
 
     @OneToMany(mappedBy = "envoice", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore // Ignorar esta relación para evitar ciclos
     @Getter @Setter private Set<EnvoiceProduct> envoiceProducts = new HashSet<>();
 
     @OneToOne(mappedBy = "envoice", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
+    @JsonIgnore // Ignorar esta relación para evitar ciclos
     @Getter @Setter private Sale sale;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
@@ -36,7 +34,10 @@ public class Envoice {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "employer_id")
+    @JsonIgnore // Ignorar si es necesario
     @Getter @Setter private Employer employer;
 }
+
+
 
 
