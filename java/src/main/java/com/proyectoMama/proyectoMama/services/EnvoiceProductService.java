@@ -1,14 +1,19 @@
 package com.proyectoMama.proyectoMama.services;
 
-import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.*;
+
+import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.Envoice;
+import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.Product;
 import com.proyectoMama.proyectoMama.repositories.EnvoiceProductRepository;
 import com.proyectoMama.proyectoMama.repositories.EnvoiceRepository;
 import com.proyectoMama.proyectoMama.repositories.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
+import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.EnvoiceProduct;
+import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.EnvoiceProductDTO;
 
 @Service
 public class EnvoiceProductService {
@@ -22,36 +27,28 @@ public class EnvoiceProductService {
     @Autowired
     private ProductRepository productRepository;
 
-    public List<EnvoiceProduct> getAllEnvoiceProducts() {
-        return envoiceProductRepository.findAll();
+    public List<EnvoiceProductDTO> getAllEnvoiceProducts() {
+        return envoiceProductRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    public EnvoiceProduct getEnvoiceProductById(Long id) {
-        return envoiceProductRepository.findById(id).orElse(null);
+    public EnvoiceProductDTO getEnvoiceProductById(Long id) {
+        EnvoiceProduct envoiceProduct = envoiceProductRepository.findById(id).orElse(null);
+        return envoiceProduct != null ? convertToDTO(envoiceProduct) : null;
     }
 
-    public EnvoiceProduct createEnvoiceProduct(EnvoiceProduct envoiceProduct) {
-        Assert.notNull(envoiceProduct.getEnvoice(), "Envoice must not be null");
-        Assert.notNull(envoiceProduct.getProduct(), "Product must not be null");
-
-        // Asignar Envoice y Product a partir de sus IDs
-        Envoice envoice = envoiceRepository.findById(envoiceProduct.getEnvoice().getId_envoice())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid envoice ID"));
-        Product product = productRepository.findById(envoiceProduct.getProduct().getId_product())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid product ID"));
-
-        envoiceProduct.setEnvoice(envoice);
-        envoiceProduct.setProduct(product);
-
-        return envoiceProductRepository.save(envoiceProduct);
+    public EnvoiceProductDTO createEnvoiceProduct(EnvoiceProductDTO dto) {
+        EnvoiceProduct envoiceProduct = convertToEntity(dto);
+        return convertToDTO(envoiceProductRepository.save(envoiceProduct));
     }
 
-    public EnvoiceProduct updateEnvoiceProduct(Long id, EnvoiceProduct envoiceProductDetails) {
+    public EnvoiceProductDTO updateEnvoiceProduct(Long id, EnvoiceProductDTO dto) {
         return envoiceProductRepository.findById(id).map(envoiceProduct -> {
-            envoiceProduct.setEnvoice(envoiceProductDetails.getEnvoice());
-            envoiceProduct.setProduct(envoiceProductDetails.getProduct());
-            envoiceProduct.setQuantity(envoiceProductDetails.getQuantity());
-            return envoiceProductRepository.save(envoiceProduct);
+            envoiceProduct.setEnvoice(envoiceRepository.findById(dto.getEnvoice_Id()).orElse(null));
+            envoiceProduct.setProduct(productRepository.findById(dto.getId_product()).orElse(null));
+            envoiceProduct.setQuantity(dto.getQuantity());
+            return convertToDTO(envoiceProductRepository.save(envoiceProduct));
         }).orElse(null);
     }
 
@@ -62,29 +59,29 @@ public class EnvoiceProductService {
         }).orElse(false);
     }
 
-    public EnvoiceProduct associateEnvoice(Long envoiceProductId, Long envoiceId) {
+    public EnvoiceProductDTO associateEnvoice(Long envoiceProductId, Long envoiceId) {
         return envoiceProductRepository.findById(envoiceProductId).map(envoiceProduct -> {
             Envoice envoice = envoiceRepository.findById(envoiceId).orElse(null);
             if (envoice != null) {
                 envoiceProduct.setEnvoice(envoice);
-                return envoiceProductRepository.save(envoiceProduct);
+                return convertToDTO(envoiceProductRepository.save(envoiceProduct));
             }
             return null;
         }).orElse(null);
     }
 
-    public EnvoiceProduct associateProduct(Long envoiceProductId, Long productId) {
+    public EnvoiceProductDTO associateProduct(Long envoiceProductId, Long productId) {
         return envoiceProductRepository.findById(envoiceProductId).map(envoiceProduct -> {
             Product product = productRepository.findById(productId).orElse(null);
             if (product != null) {
                 envoiceProduct.setProduct(product);
-                return envoiceProductRepository.save(envoiceProduct);
+                return convertToDTO(envoiceProductRepository.save(envoiceProduct));
             }
             return null;
         }).orElse(null);
     }
 
-    public EnvoiceProductDTO convertToDTO(EnvoiceProduct envoiceProduct) {
+    private EnvoiceProductDTO convertToDTO(EnvoiceProduct envoiceProduct) {
         EnvoiceProductDTO dto = new EnvoiceProductDTO();
         dto.setId(envoiceProduct.getId());
         dto.setEnvoice_Id(envoiceProduct.getEnvoice().getId_envoice());
@@ -93,19 +90,18 @@ public class EnvoiceProductService {
         return dto;
     }
 
-    public EnvoiceProduct convertToEntity(EnvoiceProductDTO dto) {
+    private EnvoiceProduct convertToEntity(EnvoiceProductDTO dto) {
         EnvoiceProduct envoiceProduct = new EnvoiceProduct();
         envoiceProduct.setId(dto.getId());
-
-        Envoice envoice = envoiceRepository.findById(dto.getEnvoice_Id()).orElseThrow(() -> new IllegalArgumentException("Invalid envoice ID"));
-        envoiceProduct.setEnvoice(envoice);
-
-        Product product = productRepository.findById(dto.getId_product()).orElseThrow(() -> new IllegalArgumentException("Invalid product ID"));
-        envoiceProduct.setProduct(product);
-
+        envoiceProduct.setEnvoice(envoiceRepository.findById(dto.getEnvoice_Id()).orElse(null));
+        envoiceProduct.setProduct(productRepository.findById(dto.getId_product()).orElse(null));
         envoiceProduct.setQuantity(dto.getQuantity());
         return envoiceProduct;
     }
 }
+
+
+
+
 
 

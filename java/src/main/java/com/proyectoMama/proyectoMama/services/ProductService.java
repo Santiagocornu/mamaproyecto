@@ -1,12 +1,13 @@
 package com.proyectoMama.proyectoMama.services;
 
 import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.Product;
+import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.ProductDTO;
 import com.proyectoMama.proyectoMama.repositories.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
+
 
 @Service
 public class ProductService {
@@ -14,25 +15,28 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    public List<ProductDTO> getAllProducts() {
+        return productRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    public Product getProductById(Long id) {
-        return productRepository.findById(id).orElse(null);
+    public ProductDTO getProductById(Long id) {
+        Product product = productRepository.findById(id).orElse(null);
+        return product != null ? convertToDTO(product) : null;
     }
 
-    public Product createProduct(Product product) {
-        return productRepository.save(product);
+    public ProductDTO createProduct(ProductDTO productDTO) {
+        Product product = convertToEntity(productDTO);
+        return convertToDTO(productRepository.save(product));
     }
 
-    public Product updateProduct(Long id, Product productDetails) {
+    public ProductDTO updateProduct(Long id, ProductDTO productDTO) {
         return productRepository.findById(id).map(product -> {
-            product.setNombre_product(productDetails.getNombre_product());
-            product.setDescripcion_product(productDetails.getDescripcion_product());
-            product.setPrecio(productDetails.getPrecio());
-            product.setEnvoiceProducts(productDetails.getEnvoiceProducts());
-            return productRepository.save(product);
+            product.setNombre_product(productDTO.getNombre_product());
+            product.setDescripcion_product(productDTO.getDescripcion_product());
+            product.setPrecio(productDTO.getPrecio());
+            return convertToDTO(productRepository.save(product));
         }).orElse(null);
     }
 
@@ -42,7 +46,26 @@ public class ProductService {
             return true;
         }).orElse(false);
     }
+
+    private ProductDTO convertToDTO(Product product) {
+        ProductDTO dto = new ProductDTO();
+        dto.setId_product(product.getId_product());
+        dto.setNombre_product(product.getNombre_product());
+        dto.setDescripcion_product(product.getDescripcion_product());
+        dto.setPrecio(product.getPrecio());
+        return dto;
+    }
+
+    private Product convertToEntity(ProductDTO dto) {
+        Product product = new Product();
+        product.setId_product(dto.getId_product());
+        product.setNombre_product(dto.getNombre_product());
+        product.setDescripcion_product(dto.getDescripcion_product());
+        product.setPrecio(dto.getPrecio());
+        return product;
+    }
 }
+
 
 
 

@@ -1,17 +1,18 @@
 package com.proyectoMama.proyectoMama.services;
 
-
 import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.Envoice;
+import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.EnvoiceDTO;
+import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.EnvoiceProduct;
+import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.EnvoiceProductDTO;
 import com.proyectoMama.proyectoMama.entities.Person.Client;
-import com.proyectoMama.proyectoMama.entities.Person.Employer;
 import com.proyectoMama.proyectoMama.repositories.ClientRepository;
-import com.proyectoMama.proyectoMama.repositories.EmployerRepository;
+import com.proyectoMama.proyectoMama.repositories.EnvoiceProductRepository;
 import com.proyectoMama.proyectoMama.repositories.EnvoiceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class EnvoiceService {
@@ -20,65 +21,91 @@ public class EnvoiceService {
     private EnvoiceRepository envoiceRepository;
 
     @Autowired
-    private ClientRepository clientRepository;
+    private EnvoiceProductRepository envoiceProductRepository;
 
     @Autowired
-    private EmployerRepository employerRepository;
+    private ClientRepository clientRepository;
 
-    public List<Envoice> getAllEnvoices() {
-        return envoiceRepository.findAll();
+    public List<EnvoiceDTO> getAllEnvoices() {
+        return envoiceRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    public Optional<Envoice> getEnvoiceById(Long id) {
-        return envoiceRepository.findById(id);
+    public EnvoiceDTO getEnvoiceById(Long id) {
+        Envoice envoice = envoiceRepository.findById(id).orElse(null);
+        return envoice != null ? convertToDTO(envoice) : null;
     }
 
-    public Envoice createEnvoice(Envoice envoice) {
-        return envoiceRepository.save(envoice);
+    public EnvoiceDTO createEnvoice(EnvoiceDTO envoiceDTO) {
+        Envoice envoice = convertToEntity(envoiceDTO);
+        return convertToDTO(envoiceRepository.save(envoice));
     }
 
-    public Optional<Envoice> updateEnvoice(Long id, Envoice envoiceDetails) {
+    public EnvoiceDTO updateEnvoice(Long id, EnvoiceDTO envoiceDTO) {
         return envoiceRepository.findById(id).map(envoice -> {
-            envoice.setNombre_envoice(envoiceDetails.getNombre_envoice());
-            envoice.setMedioPago_envoice(envoiceDetails.getMedioPago_envoice());
-            envoice.setTotal_envoice(envoiceDetails.getTotal_envoice());
-            envoice.setEnvoiceProducts(envoiceDetails.getEnvoiceProducts());
-            envoice.setSale(envoiceDetails.getSale());
-            envoice.setClient(envoiceDetails.getClient());
-            envoice.setEmployer(envoiceDetails.getEmployer());
-            return envoiceRepository.save(envoice);
-        });
+            envoice.setNombre_envoice(envoiceDTO.getNombre_envoice());
+            envoice.setMedioPago_envoice(envoiceDTO.getMedioPago_envoice());
+            envoice.setTotal_envoice(envoiceDTO.getTotal_envoice());
+            envoice.setClient(envoiceDTO.getClient_id() != null ? clientRepository.findById(envoiceDTO.getClient_id()).orElse(null) : null);
+            return convertToDTO(envoiceRepository.save(envoice));
+        }).orElse(null);
     }
 
     public boolean deleteEnvoice(Long id) {
         return envoiceRepository.findById(id).map(envoice -> {
+            // Eliminar envoiceProducts asociados
+            List<EnvoiceProduct> envoiceProducts = envoiceProductRepository.findByEnvoiceId(id);
+            envoiceProducts.forEach(envoiceProductRepository::delete);
+
+            // Eliminar la envoice
             envoiceRepository.delete(envoice);
             return true;
         }).orElse(false);
     }
 
-    public Envoice associateClient(Long envoiceId, Long clientId) {
+    public List<EnvoiceProductDTO> getProductsByEnvoiceId(Long envoiceId) {
+        return envoiceProductRepository.findByEnvoiceId(envoiceId).stream()
+                .map(envoiceProduct -> {
+                    EnvoiceProductDTO dto = new EnvoiceProductDTO();
+                    dto.setId(envoiceProduct.getId());
+                    dto.setEnvoice_Id(envoiceProduct.getEnvoice().getId_envoice());
+                    dto.setId_product(envoiceProduct.getProduct().getId_product());
+                    dto.setQuantity(envoiceProduct.getQuantity());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public EnvoiceDTO associateClient(Long envoiceId, Long clientId) {
         return envoiceRepository.findById(envoiceId).map(envoice -> {
             Client client = clientRepository.findById(clientId).orElse(null);
             if (client != null) {
                 envoice.setClient(client);
-                return envoiceRepository.save(envoice);
+                return convertToDTO(envoiceRepository.save(envoice));
             }
             return null;
         }).orElse(null);
     }
 
+    private EnvoiceDTO convertToDTO(Envoice envoice) {
+        EnvoiceDTO dto = new EnvoiceDTO();
+        dto.setId_envoice(envoice.getId_envoice());
+        dto.setNombre_envoice(envoice.getNombre_envoice());
+        dto.setMedioPago_envoice(envoice.getMedioPago_envoice());
+        dto.setTotal_envoice(envoice.getTotal_envoice());
+        dto.setClient_id(envoice.getClient() != null ? envoice.getClient().getId_person() : null);
+        return dto;
+    }
 
-
-    public Envoice associateEmployer(Long envoiceId, Long employerId) {
-        return envoiceRepository.findById(envoiceId).map(envoice -> {
-            Employer employer = employerRepository.findById(employerId).orElse(null);
-            if (employer != null) {
-                envoice.setEmployer(employer);
-                return envoiceRepository.save(envoice);
-            }
-            return null;
-        }).orElse(null);
+    private Envoice convertToEntity(EnvoiceDTO dto) {
+        Envoice envoice = new Envoice();
+        envoice.setId_envoice(dto.getId_envoice());
+        envoice.setNombre_envoice(dto.getNombre_envoice());
+        envoice.setMedioPago_envoice(dto.getMedioPago_envoice());
+        envoice.setTotal_envoice(dto.getTotal_envoice());
+        envoice.setClient(dto.getClient_id() != null ? clientRepository.findById(dto.getClient_id()).orElse(null) : null);
+        return envoice;
     }
 }
 

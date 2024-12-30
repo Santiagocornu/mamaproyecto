@@ -3,6 +3,7 @@ package com.proyectoMama.proyectoMama.controllers;
 import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.Envoice;
 
 import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.EnvoiceDTO;
+import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.EnvoiceProductDTO;
 import com.proyectoMama.proyectoMama.services.ClientService;
 import com.proyectoMama.proyectoMama.services.EmployerService;
 import com.proyectoMama.proyectoMama.services.EnvoiceService;
@@ -11,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
+
 import java.util.stream.Collectors;
 
 @RestController
@@ -22,36 +23,34 @@ public class EnvoiceController {
     @Autowired
     private EnvoiceService envoiceService;
 
-    @Autowired
-    private ClientService clientService;
-
-    @Autowired
-    private EmployerService employerService;
-
     @GetMapping
     public List<EnvoiceDTO> getAllEnvoices() {
-        List<Envoice> envoices = envoiceService.getAllEnvoices();
-        return envoices.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return envoiceService.getAllEnvoices();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<EnvoiceDTO> getEnvoiceById(@PathVariable Long id) {
-        Optional<Envoice> envoice = envoiceService.getEnvoiceById(id);
-        return envoice.map(value -> ResponseEntity.ok(convertToDTO(value)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        EnvoiceDTO envoiceDTO = envoiceService.getEnvoiceById(id);
+        if (envoiceDTO != null) {
+            return ResponseEntity.ok(envoiceDTO);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping
-    public EnvoiceDTO createEnvoice(@RequestBody Envoice envoice) {
-        Envoice createdEnvoice = envoiceService.createEnvoice(envoice);
-        return convertToDTO(createdEnvoice);
+    public EnvoiceDTO createEnvoice(@RequestBody EnvoiceDTO envoiceDTO) {
+        return envoiceService.createEnvoice(envoiceDTO);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EnvoiceDTO> updateEnvoice(@PathVariable Long id, @RequestBody Envoice envoiceDetails) {
-        Optional<Envoice> updatedEnvoice = envoiceService.updateEnvoice(id, envoiceDetails);
-        return updatedEnvoice.map(value -> ResponseEntity.ok(convertToDTO(value)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<EnvoiceDTO> updateEnvoice(@PathVariable Long id, @RequestBody EnvoiceDTO envoiceDTO) {
+        EnvoiceDTO updatedEnvoice = envoiceService.updateEnvoice(id, envoiceDTO);
+        if (updatedEnvoice != null) {
+            return ResponseEntity.ok(updatedEnvoice);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
@@ -65,34 +64,25 @@ public class EnvoiceController {
 
     @PutMapping("/{id}/associateClient")
     public ResponseEntity<EnvoiceDTO> associateClient(@PathVariable Long id, @RequestParam Long clientId) {
-        Envoice updatedEnvoice = envoiceService.associateClient(id, clientId);
+        EnvoiceDTO updatedEnvoice = envoiceService.associateClient(id, clientId);
         if (updatedEnvoice != null) {
-            return ResponseEntity.ok(convertToDTO(updatedEnvoice));
+            return ResponseEntity.ok(updatedEnvoice);
         } else {
             return ResponseEntity.notFound().build();
         }
     }
 
-    @PutMapping("/{id}/associateEmployer")
-    public ResponseEntity<EnvoiceDTO> associateEmployer(@PathVariable Long id, @RequestParam Long employerId) {
-        Envoice updatedEnvoice = envoiceService.associateEmployer(id, employerId);
-        if (updatedEnvoice != null) {
-            return ResponseEntity.ok(convertToDTO(updatedEnvoice));
+    @GetMapping("/{id}/products")
+    public ResponseEntity<List<EnvoiceProductDTO>> getProductsByEnvoiceId(@PathVariable Long id) {
+        List<EnvoiceProductDTO> products = envoiceService.getProductsByEnvoiceId(id);
+        if (products != null && !products.isEmpty()) {
+            return ResponseEntity.ok(products);
         } else {
             return ResponseEntity.notFound().build();
         }
-    }
-
-    private EnvoiceDTO convertToDTO(Envoice envoice) {
-        EnvoiceDTO dto = new EnvoiceDTO();
-        dto.setId_envoice(envoice.getId_envoice());
-        dto.setNombre_envoice(envoice.getNombre_envoice());
-        dto.setMedioPago_envoice(envoice.getMedioPago_envoice());
-        dto.setTotal_envoice(envoice.getTotal_envoice());
-        dto.setClient_id(envoice.getClient() != null ? envoice.getClient().getId_person() : null);
-        return dto;
     }
 }
+
 
 
 
