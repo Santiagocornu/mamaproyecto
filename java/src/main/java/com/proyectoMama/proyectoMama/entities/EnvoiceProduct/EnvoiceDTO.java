@@ -6,6 +6,7 @@ public class EnvoiceDTO {
         private String medioPago_envoice;
         private Double total_envoice;
         private Long client_id;
+        private Long employer_id;
 
         // Getters and setters
         public Long getId_envoice() {
@@ -46,5 +47,12 @@ public class EnvoiceDTO {
 
         public void setClient_id(Long client_id) {
             this.client_id = client_id;
+        }
+        public Long getEmployer_id() {
+            return employer_id;
+        }
+
+        public void setEmployer_id(Long employer_id) {
+        this.employer_id = employer_id;
         }
     }

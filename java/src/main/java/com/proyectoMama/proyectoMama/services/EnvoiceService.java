@@ -5,7 +5,9 @@ import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.EnvoiceDTO;
 import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.EnvoiceProduct;
 import com.proyectoMama.proyectoMama.entities.EnvoiceProduct.EnvoiceProductDTO;
 import com.proyectoMama.proyectoMama.entities.Person.Client;
+import com.proyectoMama.proyectoMama.entities.Person.Employer;
 import com.proyectoMama.proyectoMama.repositories.ClientRepository;
+import com.proyectoMama.proyectoMama.repositories.EmployerRepository;
 import com.proyectoMama.proyectoMama.repositories.EnvoiceProductRepository;
 import com.proyectoMama.proyectoMama.repositories.EnvoiceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,9 @@ public class EnvoiceService {
 
     @Autowired
     private ClientRepository clientRepository;
+
+    @Autowired
+    private EmployerRepository employerRepository;  // Asegúrate de tener este repositorio
 
     public List<EnvoiceDTO> getAllEnvoices() {
         return envoiceRepository.findAll().stream()
@@ -48,6 +53,7 @@ public class EnvoiceService {
             envoice.setMedioPago_envoice(envoiceDTO.getMedioPago_envoice());
             envoice.setTotal_envoice(envoiceDTO.getTotal_envoice());
             envoice.setClient(envoiceDTO.getClient_id() != null ? clientRepository.findById(envoiceDTO.getClient_id()).orElse(null) : null);
+            envoice.setEmployer(envoiceDTO.getEmployer_id() != null ? employerRepository.findById(envoiceDTO.getEmployer_id()).orElse(null) : null);
             return convertToDTO(envoiceRepository.save(envoice));
         }).orElse(null);
     }
@@ -88,6 +94,17 @@ public class EnvoiceService {
         }).orElse(null);
     }
 
+    public EnvoiceDTO associateEmployer(Long envoiceId, Long employerId) {
+        return envoiceRepository.findById(envoiceId).map(envoice -> {
+            Employer employer = employerRepository.findById(employerId).orElse(null);
+            if (employer != null) {
+                envoice.setEmployer(employer);
+                return convertToDTO(envoiceRepository.save(envoice));
+            }
+            return null;
+        }).orElse(null);
+    }
+
     private EnvoiceDTO convertToDTO(Envoice envoice) {
         EnvoiceDTO dto = new EnvoiceDTO();
         dto.setId_envoice(envoice.getId_envoice());
@@ -95,6 +112,7 @@ public class EnvoiceService {
         dto.setMedioPago_envoice(envoice.getMedioPago_envoice());
         dto.setTotal_envoice(envoice.getTotal_envoice());
         dto.setClient_id(envoice.getClient() != null ? envoice.getClient().getId_person() : null);
+        dto.setEmployer_id(envoice.getEmployer() != null ? envoice.getEmployer().getId_person() : null);
         return dto;
     }
 
@@ -105,9 +123,12 @@ public class EnvoiceService {
         envoice.setMedioPago_envoice(dto.getMedioPago_envoice());
         envoice.setTotal_envoice(dto.getTotal_envoice());
         envoice.setClient(dto.getClient_id() != null ? clientRepository.findById(dto.getClient_id()).orElse(null) : null);
+        envoice.setEmployer(dto.getEmployer_id() != null ? employerRepository.findById(dto.getEmployer_id()).orElse(null) : null);
         return envoice;
     }
 }
+
+
 
 
 

@@ -71,6 +71,17 @@ public class EnvoiceController {
             return ResponseEntity.notFound().build();
         }
     }
+    @PutMapping("/{id}/associateEmployer")
+    public ResponseEntity<EnvoiceDTO> associateEmployer(@PathVariable Long id, @RequestParam Long employerId) {
+        EnvoiceDTO updatedEnvoice = envoiceService.associateEmployer(id, employerId);
+        if (updatedEnvoice != null) {
+            return ResponseEntity.ok(updatedEnvoice);
+        }
+        else
+        {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
     @GetMapping("/{id}/products")
     public ResponseEntity<List<EnvoiceProductDTO>> getProductsByEnvoiceId(@PathVariable Long id) {
@@ -82,6 +93,7 @@ public class EnvoiceController {
         }
     }
 }
+
 
 
 
